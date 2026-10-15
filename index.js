@@ -101135,6 +101135,7 @@ const setBackBufferSrgb = (device, enabled) => {
 class MobileParallax {
     constructor(global, options = {}) {
         this.global = global;
+        this.heroMode = global.config.heroMode;
         this.enabled = false;
         this.destroyed = false;
         this.pending = false;
@@ -101180,13 +101181,14 @@ class MobileParallax {
             this.recenter();
             this.x = this.y = 0;
         };
-        if (options?.enabled !== true || !global.config.ui ||
+        if (options?.enabled !== true || (!global.config.ui && !this.heroMode) ||
             !window.matchMedia('(any-pointer: coarse)').matches) return;
         const panel = document.createElement('div');
         panel.className = 'sse-mobile-parallax';
         panel.setAttribute('role', 'group');
         panel.setAttribute('aria-label', 'Tilt parallax');
         panel.style.cssText = 'position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);left:calc(env(safe-area-inset-left,0px) + 12px);z-index:100;display:flex;flex-wrap:wrap;gap:6px;max-width:calc(100% - 24px);pointer-events:auto;color:white;font:13px system-ui';
+        this.compactStyle = panel.style.cssText;
         const makeButton = (label) => {
             const button = document.createElement('button');
             button.type = 'button';
@@ -101196,7 +101198,16 @@ class MobileParallax {
             return button;
         };
         this.panel = panel;
+        this.welcomeTitle = document.createElement('strong');
+        this.welcomeTitle.textContent = 'Explore with a tilt';
+        this.welcomeTitle.style.cssText = 'display:block;font-size:26px;line-height:1.2;';
+        panel.appendChild(this.welcomeTitle);
+        this.welcomeText = document.createElement('p');
+        this.welcomeText.textContent = 'Enable motion, then gently tilt your phone to explore the scene.';
+        this.welcomeText.style.cssText = 'margin:0;color:#d6d6d6;font-size:15px;line-height:1.5;';
+        panel.appendChild(this.welcomeText);
         this.button = makeButton('Enable tilt');
+        this.compactButtonStyle = this.button.style.cssText;
         this.button.setAttribute('aria-pressed', 'false');
         this.centerButton = makeButton('Recenter');
         this.centerButton.hidden = true;
@@ -101204,6 +101215,12 @@ class MobileParallax {
         this.status.setAttribute('role', 'status');
         this.status.style.cssText = 'flex-basis:100%;background:#171717e8;border-radius:4px;padding:4px;';
         panel.appendChild(this.status);
+        this.skipButton = makeButton('Continue without tilt');
+        this.skipButton.addEventListener('click', (event) => {
+            event.stopPropagation();
+            this.disable();
+            this.dismissWelcome();
+        });
         // Avoid forwarding button gestures to the viewer's navigation listeners.
         for (const type of ['pointerdown', 'pointerup', 'touchstart', 'touchend', 'wheel', 'keydown', 'keyup']) {
             panel.addEventListener(type, (event) => event.stopPropagation());
@@ -101219,13 +101236,62 @@ class MobileParallax {
         });
         global.root.appendChild(panel);
         if (!window.isSecureContext || !window.DeviceOrientationEvent) {
+            this.dismissWelcome();
             this.button.disabled = true;
             this.status.textContent = !window.isSecureContext ? 'Tilt requires HTTPS.' : 'Tilt is unavailable on this device.';
+        } else {
+            this.welcomeOverlay = document.createElement('div');
+            this.welcomeOverlay.style.cssText = 'position:absolute;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;background:rgba(0,0,0,.55);pointer-events:auto;overflow:auto;';
+            panel.style.cssText = 'box-sizing:border-box;width:340px;max-width:100%;max-height:100%;overflow:auto;display:flex;flex-direction:column;gap:16px;padding:28px;border:1px solid #ffffff30;border-radius:20px;background:#181818f5;color:white;text-align:center;font:15px system-ui;box-shadow:0 16px 60px #0006;';
+            this.button.style.cssText = 'min-height:52px;width:100%;border:0;border-radius:10px;background:white;color:#111;font:600 17px system-ui;cursor:pointer;touch-action:manipulation;';
+            this.skipButton.style.cssText = 'min-height:44px;border:0;background:transparent;color:#ddd;font:14px system-ui;cursor:pointer;text-decoration:underline;touch-action:manipulation;';
+            this.welcomeOverlay.appendChild(panel);
+            global.root.appendChild(this.welcomeOverlay);
+            for (const type of ['pointerdown', 'pointerup', 'click', 'touchstart', 'touchend', 'wheel']) {
+                this.welcomeOverlay.addEventListener(type, (event) => event.stopPropagation());
+            }
+            panel.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && this.welcomeOverlay) {
+                    this.disable();
+                    this.dismissWelcome();
+                }
+            });
+        }
+        if (this.heroMode) {
+            if (this.welcomeOverlay) {
+                global.root.appendChild(panel);
+                this.welcomeOverlay.remove();
+                this.welcomeOverlay = null;
+            }
+            this.welcomeTitle.style.display = 'none';
+            this.welcomeText.hidden = true;
+            this.skipButton.hidden = true;
+            this.centerButton.hidden = true;
+            panel.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:100;width:260px;max-width:calc(100% - 40px);display:flex;flex-direction:column;gap:10px;pointer-events:none;text-align:center;color:white;font:14px system-ui;';
+            this.button.style.cssText = 'min-height:54px;padding:14px 28px;border:1px solid #ffffff50;border-radius:12px;background:#181818ed;color:white;font:600 17px system-ui;cursor:pointer;pointer-events:auto;touch-action:pan-y;';
+            if (this.button.disabled) panel.style.display = 'none';
         }
         window.addEventListener('orientationchange', this.recenter);
         window.screen.orientation?.addEventListener('change', this.recenter);
         document.addEventListener('visibilitychange', this.onVisibility);
         this.xrListener = global.events.on('xrMode:changed', this.onXR);
+    }
+    dismissWelcome() {
+        if (this.heroMode) {
+            this.panel.style.display = 'none';
+            return;
+        }
+        this.welcomeTitle.hidden = true;
+        this.welcomeTitle.style.display = 'none';
+        this.welcomeText.hidden = true;
+        this.skipButton.hidden = true;
+        this.panel.style.cssText = this.compactStyle;
+        this.button.style.cssText = this.compactButtonStyle;
+        if (this.welcomeOverlay) {
+            this.global.root.appendChild(this.panel);
+            this.welcomeOverlay.remove();
+            this.welcomeOverlay = null;
+        }
     }
     async enable() {
         if (this.destroyed || this.pending || !this.button || this.button.disabled) return;
@@ -101241,10 +101307,11 @@ class MobileParallax {
             if (this.destroyed || generation !== this.generation) return;
             if (permission !== 'granted') throw new Error('Motion access was not granted. Check browser permissions and try again.');
             this.enabled = true;
+            this.dismissWelcome();
             this.recenter();
             this.button.textContent = 'Disable tilt';
             this.button.setAttribute('aria-pressed', 'true');
-            this.centerButton.hidden = false;
+            this.centerButton.hidden = !!this.heroMode;
             this.status.textContent = 'Hold comfortably, then gently tilt your phone.';
             window.addEventListener('deviceorientation', this.onOrientation, { passive: true });
             this.sensorTimer = setTimeout(() => {
@@ -101276,6 +101343,7 @@ class MobileParallax {
             this.button.disabled = false;
             this.centerButton.hidden = true;
             this.status.textContent = '';
+            if (this.heroMode) this.panel.style.display = 'flex';
         }
     }
     apply(cameraEntity, deltaTime) {
@@ -101303,6 +101371,7 @@ class MobileParallax {
         window.screen.orientation?.removeEventListener('change', this.recenter);
         document.removeEventListener('visibilitychange', this.onVisibility);
         this.xrListener?.off();
+        this.welcomeOverlay?.remove();
         this.panel?.remove();
     }
 }
@@ -101468,9 +101537,9 @@ class Viewer {
             }
             if (this.inputController && this.cameraManager) {
                 // update inputs
-                this.inputController.update(deltaTime, this.cameraManager.camera.distance);
+                if (!config.heroMode) this.inputController.update(deltaTime, this.cameraManager.camera.distance);
                 // update cameras
-                this.cameraManager.update(deltaTime, this.inputController.frame);
+                if (!config.heroMode) this.cameraManager.update(deltaTime, this.inputController.frame);
                 // apply to the camera entity
                 applyCamera(this.cameraManager.camera, deltaTime);
             }
@@ -101620,7 +101689,10 @@ class Viewer {
                 : new Picker(app, camera);
             // for development pages (the bench measures pick noise), as splatRenderer:ready
             events.fire('picker:ready', this.picker);
-            this.inputController = new InputController(global, this.picker);
+            // Hero mode never attaches navigation devices or their preventDefault handlers.
+            this.inputController = config.heroMode
+                ? { destroy() {}, setMoveInput() {}, collision: null }
+                : new InputController(global, this.picker);
             this.cameraManager = new CameraManager(global, sceneBound);
             applyCamera(this.cameraManager.camera);
             if (config.ui) {
@@ -102278,6 +102350,7 @@ const resolveConfig = (options) => ({
     heatmap: options.heatmap ?? false,
     debug: options.debug ?? false,
     lang: options.lang,
+    heroMode: options.heroMode === true,
     exposeGlobals: options.exposeGlobals ?? false
 });
 const createViewer = async (options) => {
@@ -102337,7 +102410,7 @@ const createViewer = async (options) => {
         isFullscreen: false,
         controlsHidden: false,
         selectedAnnotation: null,
-        inputEnabled: true
+        inputEnabled: !config.heroMode
     });
     const global = {
         app,

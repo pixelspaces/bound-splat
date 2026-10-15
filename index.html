@@ -22,6 +22,11 @@
                 margin: 0;
                 overflow: hidden;
             }
+            .sse-viewer, .sse-viewer canvas {
+                touch-action: pan-y !important;
+                overscroll-behavior: auto;
+            }
+            .sse-viewer canvas { pointer-events: none; }
         </style>
 
         <!--
@@ -75,22 +80,21 @@
             // the content fetch start here, before the module bundle has arrived.
             const sseOptions = {
                 contentUrl,
-                // Emergency opt-out; this never auto-enables motion.
-                mobileParallax: url.searchParams.get('parallax') === '0' ? { enabled: false } : undefined,
                 contentFilename,
                 posterUrl,
                 skyboxUrl,
                 collisionUrl,
                 poster: posterUrl && createImage(posterUrl),
                 contents: prefetchContent ? fetch(contentUrl) : undefined,
-                ui: !url.searchParams.has('noui'),
-                reticle: url.searchParams.has('reticle'),
-                noanim: url.searchParams.has('noanim'),
+                ui: false,
+                heroMode: true,
+                reticle: false,
+                noanim: true,
                 nofx: url.searchParams.has('nofx'),
                 hpr: url.searchParams.has('hpr')
                     ? ['', '1', 'true', 'enable'].includes(url.searchParams.get('hpr'))
                     : undefined,
-                ministats: url.searchParams.has('ministats'),
+                ministats: false,
                 colorize: url.searchParams.has('colorize'),
                 renderer,
                 aa: url.searchParams.has('aa'),
@@ -100,10 +104,10 @@
                 budget,
                 heatmap: url.searchParams.has('heatmap'),
                 fullload: url.searchParams.has('fullload'),
-                debug: url.searchParams.has('debug'),
+                debug: false,
                 lang: url.searchParams.get('lang'),
                 // the standalone document is the one place the window.* hooks belong
-                exposeGlobals: true
+                exposeGlobals: false
             };
 
             window.sse = {

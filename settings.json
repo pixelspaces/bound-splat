@@ -64,8 +64,8 @@
     "startMode": "default",
     "mobileParallax": {
         "enabled": true,
-        "maxOffset": 0.12,
-        "maxTiltDegrees": 15,
+        "maxOffset": 0.4,
+        "maxTiltDegrees": 10,
         "smoothingSeconds": 0.18
     }
 }

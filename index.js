@@ -101147,6 +101147,9 @@ class MobileParallax {
         const number = (value, fallback, min, max) =>
             Number.isFinite(value) ? Math.max(min, Math.min(max, value)) : fallback;
         this.maxRotation = number(options?.maxRotationDegrees, 10, 0, 30);
+        const target = options?.orbitTarget ?? global.settings?.cameras?.[0]?.initial?.target;
+        this.orbitTarget = Array.isArray(target) && target.length === 3 && target.every(Number.isFinite)
+            ? new Vec3(target[0], target[1], target[2]) : null;
         this.maxTilt = number(options?.maxTiltDegrees, 15, 1, 45);
         this.smoothing = number(options?.smoothingSeconds, 0.18, 0.02, 2);
         this.onOrientation = (event) => {
@@ -101355,9 +101358,24 @@ class MobileParallax {
         if (Math.abs(this.x - this.tx) < 1e-5) this.x = this.tx;
         if (Math.abs(this.y - this.ty) < 1e-5) this.y = this.ty;
         if (this.x === 0 && this.y === 0) return;
-        // The viewer restores the base pose each frame, so rotation never accumulates.
-        // Rotate the view about its own position; no translation or roll input.
-        cameraEntity.rotateLocal(this.y * this.maxRotation, -this.x * this.maxRotation, 0);
+        // Orbit from the freshly restored base pose, never from last frame's offset.
+        // Preserve distance to the shop and aim at the same world-space point.
+        const target = this.orbitTarget;
+        if (!target) return;
+        const base = cameraEntity.getPosition();
+        const dx = base.x - target.x, dy = base.y - target.y, dz = base.z - target.z;
+        const radius = Math.hypot(dx, dy, dz);
+        if (radius < 1e-6) return;
+        const radians = Math.PI / 180;
+        const yaw = Math.atan2(dx, dz) + this.x * this.maxRotation * radians;
+        const basePitch = Math.asin(Math.max(-1, Math.min(1, dy / radius)));
+        // Stay away from the poles so the look-at up vector remains stable.
+        const pitch = Math.max(-85 * radians, Math.min(85 * radians,
+            basePitch + this.y * this.maxRotation * radians));
+        const horizontal = radius * Math.cos(pitch);
+        cameraEntity.setPosition(target.x + horizontal * Math.sin(yaw),
+            target.y + radius * Math.sin(pitch), target.z + horizontal * Math.cos(yaw));
+        cameraEntity.lookAt(target.x, target.y, target.z);
     }
     destroy() {
         this.disable();

@@ -66,6 +66,11 @@
         "enabled": true,
         "maxTiltDegrees": 10,
         "smoothingSeconds": 0.18,
-        "maxRotationDegrees": 10
+        "maxRotationDegrees": 10,
+        "orbitTarget": [
+            -0.5724599252446949,
+            1.31861389769786,
+            0.8982170874800977
+        ]
     }
 }

@@ -101146,7 +101146,7 @@ class MobileParallax {
         this.offset = new Vec3();
         const number = (value, fallback, min, max) =>
             Number.isFinite(value) ? Math.max(min, Math.min(max, value)) : fallback;
-        this.maxOffset = number(options?.maxOffset, 0.12, 0, 1);
+        this.maxRotation = number(options?.maxRotationDegrees, 10, 0, 30);
         this.maxTilt = number(options?.maxTiltDegrees, 15, 1, 45);
         this.smoothing = number(options?.smoothingSeconds, 0.18, 0.02, 2);
         this.onOrientation = (event) => {
@@ -101355,14 +101355,9 @@ class MobileParallax {
         if (Math.abs(this.x - this.tx) < 1e-5) this.x = this.tx;
         if (Math.abs(this.y - this.ty) < 1e-5) this.y = this.ty;
         if (this.x === 0 && this.y === 0) return;
-        // applyCamera has just restored the controller's base position and rotation.
-        // Use camera-local right/up only, with no yaw/pitch or controller mutation.
-        this.position.copy(cameraEntity.getPosition());
-        this.offset.copy(cameraEntity.right).mulScalar(this.x * this.maxOffset);
-        this.position.add(this.offset);
-        this.offset.copy(cameraEntity.up).mulScalar(this.y * this.maxOffset);
-        this.position.add(this.offset);
-        cameraEntity.setPosition(this.position);
+        // The viewer restores the base pose each frame, so rotation never accumulates.
+        // Rotate the view about its own position; no translation or roll input.
+        cameraEntity.rotateLocal(this.y * this.maxRotation, -this.x * this.maxRotation, 0);
     }
     destroy() {
         this.disable();

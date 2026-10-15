@@ -8,7 +8,7 @@
             content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
         />
         <base href="" />
-        <link rel="stylesheet" href="./index.css?v=hero-wide-orbit-20261015-5" />
+        <link rel="stylesheet" href="./index.css?v=hero-button-20261015-8" />
 
         <!--
             The viewer fills whatever contains it. In the standalone document that is the page,
@@ -27,6 +27,48 @@
                 overscroll-behavior: auto;
             }
             .sse-viewer canvas { pointer-events: none; }
+            /* Website-matched secondary / overlay button. */
+            .sse-mobile-parallax button[aria-pressed] {
+                appearance: none;
+                box-sizing: border-box;
+                align-self: center;
+                width: auto !important;
+                min-width: 174px;
+                min-height: 76px !important;
+                max-width: 100%;
+                padding: 18px 28px !important;
+                border: 1px solid #b8b8b8 !important;
+                border-radius: 7px !important;
+                background: #181818 !important;
+                color: #f5f5f5 !important;
+                font: 500 26px/1.2 Arial, Helvetica, sans-serif !important;
+                letter-spacing: -0.5px; text-transform: uppercase;
+                box-shadow: none;
+                transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
+            }
+            .sse-mobile-parallax button[aria-pressed]:active {
+                background: #fff !important;
+                border-color: #fff !important;
+                color: #242424 !important;
+            }
+            @media (hover: hover) {
+                .sse-mobile-parallax button[aria-pressed]:hover {
+                    background: #fff !important;
+                    border-color: #fff !important;
+                    color: #242424 !important;
+                }
+            }
+            .sse-mobile-parallax button[aria-pressed]:focus-visible {
+                outline: 2px solid #a576ff;
+                outline-offset: 4px;
+            }
+            .sse-mobile-parallax button[aria-pressed]:disabled {
+                opacity: 0.65;
+                cursor: wait;
+            }
+            @media (prefers-reduced-motion: reduce) {
+                .sse-mobile-parallax button[aria-pressed] { transition: none; }
+            }
         </style>
 
         <!--
@@ -56,7 +98,7 @@
             const skyboxUrl = url.searchParams.get('skybox') ?? bootstrap.skyboxUrl ?? null;
             const collisionUrl =
                 url.searchParams.get('collision') ?? url.searchParams.get('voxel') ?? bootstrap.collisionUrl ?? null;
-            const settingsUrl = url.searchParams.get('settings') ?? bootstrap.settingsUrl ?? './settings.json?v=hero-wide-orbit-20261015-5';
+            const settingsUrl = url.searchParams.get('settings') ?? bootstrap.settingsUrl ?? './settings.json?v=hero-button-20261015-8';
             const contentUrl = url.searchParams.get('content') ?? bootstrap.contentUrl ?? './scene.compressed.ply';
 
             // Names the bootstrap's contentUrl when the url itself has no usable name (a data:
@@ -119,7 +161,7 @@
     <body>
         <!-- Application Script -->
         <script type="module">
-            import { createViewer } from './index.js?v=hero-wide-orbit-20261015-5';
+            import { createViewer } from './index.js?v=hero-button-20261015-8';
 
             const { options, settings } = window.sse;
 
@@ -129,4 +171,7 @@
         </script>
     </body>
 </html>
+
+
+
 

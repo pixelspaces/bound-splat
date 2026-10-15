@@ -101210,7 +101210,7 @@ class MobileParallax {
         this.welcomeText.textContent = 'Enable motion, then gently tilt your phone to explore the scene.';
         this.welcomeText.style.cssText = 'margin:0;color:#d6d6d6;font-size:15px;line-height:1.5;';
         panel.appendChild(this.welcomeText);
-        this.button = makeButton('Enable tilt');
+        this.button = makeButton('ENABLE TILT');
         this.compactButtonStyle = this.button.style.cssText;
         this.button.setAttribute('aria-pressed', 'false');
         this.centerButton = makeButton('Recenter');
@@ -101342,7 +101342,7 @@ class MobileParallax {
         window.removeEventListener('deviceorientation', this.onOrientation);
         this.recenter();
         if (this.button) {
-            this.button.textContent = 'Enable tilt';
+            this.button.textContent = 'ENABLE TILT';
             this.button.setAttribute('aria-pressed', 'false');
             this.button.disabled = false;
             this.centerButton.hidden = true;
@@ -102535,3 +102535,4 @@ console.log(`SuperSplat Viewer v${version$1} | Engine v${version$2} (${revision$
 
 export { createViewer };
 //# sourceMappingURL=index.js.map
+

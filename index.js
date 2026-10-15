@@ -101147,6 +101147,7 @@ class MobileParallax {
         const number = (value, fallback, min, max) =>
             Number.isFinite(value) ? Math.max(min, Math.min(max, value)) : fallback;
         this.maxRotation = number(options?.maxRotationDegrees, 10, 0, 30);
+        this.maxElevation = number(options?.maxElevationDegrees, 8, 0, 20);
         const target = options?.orbitTarget ?? global.settings?.cameras?.[0]?.initial?.target;
         this.orbitTarget = Array.isArray(target) && target.length === 3 && target.every(Number.isFinite)
             ? new Vec3(target[0], target[1], target[2]) : null;
@@ -101371,7 +101372,7 @@ class MobileParallax {
         const basePitch = Math.asin(Math.max(-1, Math.min(1, dy / radius)));
         // Stay away from the poles so the look-at up vector remains stable.
         const pitch = Math.max(-85 * radians, Math.min(85 * radians,
-            basePitch + this.y * this.maxRotation * radians));
+            basePitch + this.y * this.maxElevation * radians));
         const horizontal = radius * Math.cos(pitch);
         cameraEntity.setPosition(target.x + horizontal * Math.sin(yaw),
             target.y + radius * Math.sin(pitch), target.z + horizontal * Math.cos(yaw));

@@ -64,13 +64,14 @@
     "startMode": "default",
     "mobileParallax": {
         "enabled": true,
-        "maxTiltDegrees": 10,
-        "smoothingSeconds": 0.18,
-        "maxRotationDegrees": 10,
+        "maxTiltDegrees": 8,
+        "smoothingSeconds": 0.22,
+        "maxRotationDegrees": 30,
         "orbitTarget": [
             -0.5724599252446949,
             1.31861389769786,
             0.8982170874800977
-        ]
+        ],
+        "maxElevationDegrees": 8
     }
 }
